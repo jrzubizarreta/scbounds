@@ -1,6 +1,7 @@
 rm(list = ls())
 library(foreign)
 source("bounds.R")
+source("bounds_orig.R")
 
 d = read.dta("minorities/all08_11_indigenous.dta")
 nrow(d)
@@ -30,4 +31,7 @@ sampling.ratio = 9
 
 out_al = bounds(y, 1, sampling.ratio, solver="glpk")
 c("low"=out_al$mu_l, "high"=out_al$mu_h)
-bounds.logconc(y, sampling.ratio = sampling.ratio)
+bounds.logconc(y, sampling.ratio = 9)
+
+ret = bounds.upper.internal(y, sampling.ratio = 9)
+plot.ret(ret)
