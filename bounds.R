@@ -162,3 +162,19 @@ plot.ret = function(ret) {
 	lines(ret$xvals, ret$Fhat.AL, col = 4, lwd = 2, lty = 2)
 }
 
+plot.ret2 = function(ret) {
+	
+	K = length(ret$Fhat.weighted)
+	fhat =ret$Fhat - c(0, ret$Fhat[-K])
+	fhat.weighted = ret$Fhat.weighted - c(0, ret$Fhat.weighted[-K])
+	fhat.AL = ret$Fhat.AL - c(0, ret$Fhat.AL[-K])
+	
+	fhat.smooth = predict(glm(fhat ~ ns(ret$xvals, df = 7), family="quasipoisson"), type = "response")
+	fhat.weighted.smooth = predict(glm(fhat.weighted ~ ns(ret$xvals, df = 7), family="quasipoisson"), type = "response")
+	fhat.AL.smooth = predict(glm(fhat.AL ~ ns(ret$xvals, df = 7), family="quasipoisson"), type = "response")
+	
+	plot(ret$xvals, fhat.smooth, lwd = 2, ylim = range(fhat.smooth, fhat.weighted.smooth, fhat.AL.smooth))
+	lines(ret$xvals, fhat.weighted.smooth, col = 2)
+	lines(ret$xvals, fhat.AL.smooth, col = 4)
+}
+
