@@ -1,5 +1,6 @@
 library(kolmim)
 library(lpSolve)
+library(zoo) #for plotting only...
 
 get.logconc.upper = function(H) {
 
@@ -154,27 +155,33 @@ bounds.logconc = function(X, alpha = 0.05, sampling.ratio = 5,
 }
 
 plot.ret = function(ret) {
-	plot(ret$xvals, ret$Fhat, lwd = 2)
-	lines(ret$xvals, ret$Fhat.upper)
-	lines(ret$xvals, ret$Hhat.upper, col = 5)
-	lines(ret$xvals, ret$Lhat.upper, col = 6)
+	plot(ret$xvals, ret$Fhat, lwd = 2, xlab="y", ylab="F(y)")
+	lines(ret$xvals, ret$Fhat.upper, lwd = 2)
+	lines(ret$xvals, ret$Lhat.upper, col = 6, lwd = 2)
 	lines(ret$xvals, ret$Fhat.weighted, col = 2, lwd = 2)
-	lines(ret$xvals, ret$Fhat.AL, col = 4, lwd = 2, lty = 2)
+	lines(ret$xvals, ret$Fhat.AL, col = 4, lwd = 2, lty = 1)
+	legend("topleft", c("S.hat", "S.hat+", "L.hat", "F.hat (us)", "F.hat (AL)"), pch = c(1, NA, NA, NA, NA), lwd = c(NA, 2, 2, 2, 2), col = c(1, 1, 6, 2, 4))
 }
 
-plot.ret2 = function(ret) {
+zeropad = function(x) c(rep(0, 100), x, rep(0, 100))
+unpad = function(x) (x[101:(length(x) - 100)])
+
+plot.ret2 = function(ret, df=9) {
 	
 	K = length(ret$Fhat.weighted)
-	fhat =ret$Fhat - c(0, ret$Fhat[-K])
+	
+	fhat = ret$Fhat - c(0, ret$Fhat[-K])
 	fhat.weighted = ret$Fhat.weighted - c(0, ret$Fhat.weighted[-K])
 	fhat.AL = ret$Fhat.AL - c(0, ret$Fhat.AL[-K])
 	
-	fhat.smooth = predict(glm(fhat ~ ns(ret$xvals, df = 7), family="quasipoisson"), type = "response")
-	fhat.weighted.smooth = predict(glm(fhat.weighted ~ ns(ret$xvals, df = 7), family="quasipoisson"), type = "response")
-	fhat.AL.smooth = predict(glm(fhat.AL ~ ns(ret$xvals, df = 7), family="quasipoisson"), type = "response")
+	fhat.smooth = unpad(predict(glm(zeropad(fhat) ~ ns(1:(length(fhat) + 200), df = 7), family=quasi(link = "log", variance = "mu")), type = "response"))
 	
-	plot(ret$xvals, fhat.smooth, lwd = 2, ylim = range(fhat.smooth, fhat.weighted.smooth, fhat.AL.smooth))
-	lines(ret$xvals, fhat.weighted.smooth, col = 2)
-	lines(ret$xvals, fhat.AL.smooth, col = 4)
+	fhat.weighted.ratio = smooth.spline(na.approx(fhat.weighted / fhat), df = 20)$y
+	fhat.AL.ratio = na.approx(fhat.AL / fhat)
+	
+	plot(ret$xvals, fhat.smooth, lwd = 2, ylim = range(fhat.smooth, fhat.smooth * fhat.weighted.ratio, fhat.smooth * fhat.AL.ratio), xlab="y", ylab="f(y)")
+	lines(ret$xvals, fhat.smooth * fhat.weighted.ratio, col = 2, lwd = 2)
+	lines(ret$xvals, fhat.smooth * fhat.AL.ratio, col = 4, lwd = 2)
+	legend("topleft", c("Uncorrected", "AL + Log-concave constr.", "Plain Aronow-Lee"), lwd = 2, col = c(1, 2, 4))
 }
 

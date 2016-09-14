@@ -34,4 +34,11 @@ c("low"=out_al$mu_l, "high"=out_al$mu_h)
 bounds.logconc(y, sampling.ratio = 9)
 
 ret = bounds.upper.internal(y, sampling.ratio = 9)
+
+pdf("minorities_CDF.pdf")
 plot.ret(ret)
+dev.off()
+
+pdf("minorities_DEN.pdf")
+plot.ret2(ret)
+dev.off()
