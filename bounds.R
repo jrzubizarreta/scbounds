@@ -1,6 +1,7 @@
 library(kolmim)
 library(lpSolve)
-library(zoo) #for plotting only...
+library(zoo) # for plotting only
+library(splines) #for plotting only...
 
 get.logconc.upper = function(H) {
 

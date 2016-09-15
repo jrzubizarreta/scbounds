@@ -99,10 +99,11 @@ is Gaussian, then we can substantially shorten identification intervals, while i
 assumptions, e.g., that $F$ has a log-concave density, then we get smaller but still noticeable
 improvements over $\ii_{AL}$.
 
-\section{Identification Bounds under Shape Constraints}
 
-Our goal is to use shape constraints on the population distribution $F$ to add constraints
-to the original optimization problem of A-L. To do so, we focus on the weighted empirical
+\section{Identification Bounds with Parametric Constraints}
+
+We present two different ways of incorporating shape constraints on the population distribution $F$
+into the original optimization problem of A-L. Our first, direct, approach focuses on the weighted empirical
 distribution function $\hF^*$ induced by the oracle H\'ajek estimator $\hmu^*$ \eqref{eq:hajek}
 that has access to the the true sampling probabilities $\pi_i$:
 \begin{equation}
@@ -119,8 +120,7 @@ the original optimization problem \eqref{eq:AL}.
 \begin{theo}
 \label{theo:main}
 Suppose that we have access to auxiliary information on $F$ that lets us construct
-potentially random sets of distribution functions $\cset_{n, \, \gamma}$ that
-depend only on the observed sample $Y_1, \, \ldots, \, Y_n$, with the property that
+sets of distribution functions $\cset_{n, \, \gamma}$ with the property that
 $\limn \mathbb{P}[\hF^* \in \cset_{n, \, \gamma}] = 1$.
 Then, if we write
 \begin{equation}
@@ -129,7 +129,8 @@ Then, if we write
 \end{equation}
 and $\hmu^+$ as the minimizer in the same optimization problem,
 the resulting identification interval $\ii := [\hmu^-,\, \hmu^+]$ is
-consistent in the sense that $\mu \in \ii$ with probability tending to 1.
+valid in the sense that $\Delta(\mu, \ii) \rightarrow_p 0$, where
+$\Delta(\mu, \ii)$ is the distance between $\mu$ and the nearest point in the interval $\ii$.
 \end{theo}
 
 At a high level, this result shows that if we have any auxiliary information about $F$, then
@@ -140,10 +141,12 @@ into plausibility sets $\cset_{\gamma, \, n}$ that contain $\hF^*$ with high pro
 Second, any guarantee of the above form is not useful if we cannot solve the optimization
 problem \eqref{eq:main} in practice.
 Our next concern is to address these issues given specific side-information about $F$.
-First, we consider the case where $F$ is known to have a Gaussian (or log-parabolic) density,
-and, second, we study the weaker constraint by which we only know that $F$ is log-concave.
 
-\subsection{Identification Bounds with Gaussian Constraints}
+\subsection{An Explicit Algorithm}
+
+Below, we sketch a concrete algorithm that could be used with any parametric family.
+We'll mostly consider just the Gaussian case; but the same algorithm would work for
+any finite-dimensional family that allows for a grid-search over parameter space.
 
 The argument should go something like this:
 \begin{itemize}
@@ -153,24 +156,29 @@ $$ \limsup \sqrt{n} \sup_{y} \abs{\hF^*(y) - F(y)} \leq a(\gamma) D_{KS}(\alpha)
 Here, $D_{KS}$ is the KS-test statistic, and TODO say what $a(\gamma)$ is.
 \item We can then construct a natural plausibility set
 $$ \cset_{\gamma, \, n} = \cb{\hF : \sup_{y} \abs{\hF(y) - G(y)} \leq \rho_{\gamma,\, n}, \ G \text{ is Gaussian}}, $$
-where $\rho_{\gamma, \, n} = a(\gamma) D_{KS}(1/\sqrt{n})/\sqrt{n}$. Note that this is
-is non-random.
+where $\rho_{\gamma, \, n} = a(\gamma) D_{KS}(1/\sqrt{n})/\sqrt{n}$.
 \item We can run the optimization problem just like before. We run a grid search over all
-possible Gaussian distributions.
+possible Gaussian (or other parametric) distributions.
 \end{itemize}
 
-
 \begin{coro}
-If $F$ is Gaussian, then the interval $[\hmu^-, \, \hmu^+]$ covers $\mu$ with probability tending to 1.
+If $F$ is Gaussian, then the interval $[\hmu^-, \, \hmu^+]$ is an asymptotically valid identification interval.
 \end{coro}
 
-\subsection{Identification Bounds with Log-Concave Constraints}
+{\bf NB:} I think that, in general, the algorithm here will also be asymptotically sharp.
 
-Now, the argument is a little more involved. The problem is that we can't leverage
-the above estimation idea, because we can't run a grid search over all log-concave
-distributions. Instead, we need to do something much more indirect.
+\section{Identification Bounds with Non-Parametric Constraints}
+
+Now, we can't really use the above algorithm anymore, because doing a ``grid search''
+over a non-parametric class wouldn't be practical.
+
+Here's a concrete algorithm that can be used to leverage the fact that $F$ is log-concave
+to get shorter identification bounds than A-L. These bounds probably aren't 
+sharp, even asymptotically ... but at least they enable the statistician to make
+some use of the shape constraints!
 
 This is a derivation for the upper endpoint of the interval.
+To get the lower end point, we apply the whole same argument to $-Y_i$.
 \begin{itemize}
 \item First, write $S(y)$ for the cumulative distribution function of the
 \emph{sampling} distribution, and write $\hS(y)$ for the empirical distribution
@@ -187,18 +195,22 @@ $F$ itself is log-concave. (Note: this is not an if-and-only-if relation, so we 
 a little here.) Now, if $F \geq \hH_t$ and $F$ is log-concave, then $F \geq \hL_t$,
 where $\hL_t$ is the log-concave envelope of $\hH_t$. (Specifically, just make a picture
 of $(y, \, \log(\hH_t(y)))$, and then take the convex hull of these points. The ``top side''
-of this convex hull is $\hL_t$.
+of this convex hull is $\hL_t$).
+\item Define the infinimum of the lower bounds as $\hL(y) = \inf_t \hL_t(y)$.
+Clearly, $F \geq \hL$ with high probability. 
 \item Our set is now
-$$ \cset^+_{\gamma, \, n} = \cb{\hF : \hF(y) \geq \min_t \hL_t(y) \text{ for all } y \in \RR}. $$
+$$ \cset^+_{\gamma, \, n} = \cb{\hF : \hF(y) \geq \hL(y) \text{ for all } y \in \RR}. $$
 We use this in \eqref{eq:main} to get $\hmu^+$.
 \end{itemize}
-To get the lower end point, we apply the whole same argument to $-Y_i$.
 
 This algorithm does not quite fall under the scope of Theorem \ref{theo:main}, because we
 cannot guarantee that $\hF^* \in \cset^+$. But the result we want still holds.
 
 \begin{theo}
-If $F$ is log-concave, then the interval $[\hmu^-, \, \hmu^+]$ covers $\mu$ with probability tending to 1.
+If $F$ is log-concave, then the interval $[\hmu^-, \, \hmu^+]$ is an asymptotically valid identification interval.
 \end{theo}
+
+TODO: make the presentation more general. I.e., like in the previous section, first state
+a general result, and then make the log-concave application be a corollary.
 
 \end{document}
