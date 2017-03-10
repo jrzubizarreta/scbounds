@@ -175,9 +175,9 @@ plot.ret2 = function(ret, df=9) {
 	fhat.weighted = ret$Fhat.weighted - c(0, ret$Fhat.weighted[-K])
 	fhat.AL = ret$Fhat.AL - c(0, ret$Fhat.AL[-K])
 	
-	fhat.smooth = unpad(predict(glm(zeropad(fhat) ~ ns(1:(length(fhat) + 200), df = 7), family=quasi(link = "log", variance = "mu")), type = "response"))
+	fhat.smooth = unpad(predict(glm(zeropad(fhat) ~ ns(1:(length(fhat) + 200), df = df), family=quasi(link = "log", variance = "mu")), type = "response"))
 	
-	fhat.weighted.ratio = smooth.spline(na.approx(fhat.weighted / fhat), df = 20)$y
+	fhat.weighted.ratio = smooth.spline(na.approx(fhat.weighted / fhat), df = df)$y
 	fhat.AL.ratio = na.approx(fhat.AL / fhat)
 	
 	plot(ret$xvals, fhat.smooth, lwd = 2, ylim = range(fhat.smooth, fhat.smooth * fhat.weighted.ratio, fhat.smooth * fhat.AL.ratio), xlab="y", ylab="f(y)")
