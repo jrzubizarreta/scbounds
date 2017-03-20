@@ -15,7 +15,7 @@
 #' 
 #' @export bounds.symmetric.internal
 bounds.symmetric.internal = function(X, sampling.ratio = 5,
-                                 xmin = NULL, xmax = NULL, buckets = 1000, alpha = 1/length(X)) {
+                                 xmin = NULL, xmax = NULL, buckets = 1000, alpha = 1/sqrt(length(X))) {
   
   n = length(X)
   
@@ -27,15 +27,25 @@ bounds.symmetric.internal = function(X, sampling.ratio = 5,
   xvals = seq(xmin, xmax, length.out = buckets + 1)
   
   Fhat = ecdf(X)(xvals)
-  Fhat.AL = hajek.constrained.symmetric(Fhat, xvals, center, delta, sampling.ratio)
+  delta = qnorm(1 - alpha) * sqrt((1 + sampling.ratio) * (1 + 1/sampling.ratio) / 4 / n)
+  delta = delta / 2 # TODO: is this justified?
+  center.candidates = quantile(X, seq(1/sampling.ratio/2, 1 - 1/sampling.ratio/2, length.out = 10))
   
-  mu.bound = sum(xvals * (Fhat.AL - c(0, Fhat.AL[-length(Fhat.AL)])))
+  Fhat.candidates = lapply(center.candidates, function(center) {
+    hajek.constrained.symmetric(Fhat, xvals, center, delta, sampling.ratio)
+  })
   
-  ret = list(mu.bound=mu.bound,
+  mu.bound = sapply(Fhat.candidates, function(Fhat) {
+    sum(xvals * (Fhat - c(0, Fhat[-length(Fhat)])))
+  })
+  
+  opt.idx = which.max(mu.bound)
+  
+  ret = list(mu.bound=mu.bound[opt.idx],
              raw=data.frame(
                xvals=xvals,
                Fhat=Fhat,
-               Fhat.weighted=Fhat.AL
+               Fhat.weighted=Fhat.candidates[[opt.idx]]
              ))
   
   return(ret)

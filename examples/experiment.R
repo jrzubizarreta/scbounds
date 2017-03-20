@@ -30,14 +30,18 @@ cat("Number units:", n, "\n")
 # Test code
 ##############################################
 
-sampling.ratio = 9
-
-#out_al = bounds(y, 1, sampling.ratio, solver="glpk")
-#c("low"=out_al$mu_l, "high"=out_al$mu_h)
 out.al = bounds(y, sampling.ratio = 9, constraint="none")
 out.lc = bounds(y, sampling.ratio = 9, constraint="logconcave")
+out.sy = bounds(y, sampling.ratio = 9, constraint="symmetric")
 
-ret = bounds.upper.internal(y, sampling.ratio = 9)
+out.al = bounds(y, sampling.ratio = 5, constraint="none")
+out.lc = bounds(y, sampling.ratio = 5, constraint="logconcave")
+out.sy = bounds(y, sampling.ratio = 5, constraint="symmetric")
+
+
+
+
+
 
 pdf("minorities_CDF.pdf")
 plot.ret(ret)

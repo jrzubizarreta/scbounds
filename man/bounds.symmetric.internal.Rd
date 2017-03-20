@@ -5,7 +5,7 @@
 \title{Computes upper identification interval with symmetry constraints.}
 \usage{
 bounds.symmetric.internal(X, sampling.ratio = 5, xmin = NULL, xmax = NULL,
-  buckets = 1000, alpha = 1/length(X))
+  buckets = 1000, alpha = 1/sqrt(length(X)))
 }
 \arguments{
 \item{X}{The observed data.}

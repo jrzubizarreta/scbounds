@@ -74,7 +74,8 @@ get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
 #' 
 #' @export bounds.logconc.internal
 bounds.logconc.internal = function(X, sampling.ratio = 5,
-                                   xmin = NULL, xmax = NULL, buckets = 1000, alpha = 1/length(X)) {
+                                   xmin = NULL, xmax = NULL, buckets = 1000,
+                                   alpha = 1/sqrt(length(X))) {
   
   n = length(X)
   

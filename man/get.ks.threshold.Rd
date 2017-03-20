@@ -4,7 +4,7 @@
 \alias{get.ks.threshold}
 \title{Find (one-sided) length of Kolmogorov-Smirnov bounds for a CDF}
 \usage{
-get.ks.threshold(Fhat, n, alpha = 0.05)
+get.ks.threshold(n, alpha = 0.05)
 }
 \arguments{
 \item{n}{The number of samples used to compute Fhat.}

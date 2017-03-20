@@ -5,8 +5,8 @@
 \title{Main function. Computes identification interval.}
 \usage{
 bounds(X, sampling.ratio = 5, constraint = c("none", "logconcave",
-  "symmetric", "gaussian"), alpha = 1/length(X), xmin = min(X),
-  xmax = max(X), buckets = 1000)
+  "symmetric", "gaussian"), alpha = 1/sqrt(length(X)), xmin = NULL,
+  xmax = NULL, buckets = 1000)
 }
 \arguments{
 \item{X}{The observed data.}

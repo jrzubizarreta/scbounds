@@ -14,9 +14,12 @@
 #' 
 #' @export bounds
 bounds = function(X, sampling.ratio = 5, constraint = c("none", "logconcave", "symmetric", "gaussian"),
-                  alpha = 1/length(X), xmin = min(X), xmax = max(X), buckets = 1000) {
+                  alpha = 1/sqrt(length(X)), xmin = NULL, xmax = NULL, buckets = 1000) {
   
   constraint = match.arg(constraint)
+  
+  if(is.null(xmin)) xmin = min(X) - sd(X)
+  if(is.null(xmax)) xmax = max(X) + sd(X)
   
   if (constraint == "none") {
 
@@ -31,7 +34,11 @@ bounds = function(X, sampling.ratio = 5, constraint = c("none", "logconcave", "s
     interval = c(-low.obj$mu.bound, high.obj$mu.bound)
     
   } else if (constraint == "symmetric") {
-    stop()
+   
+    low.obj = bounds.symmetric.internal(-X, sampling.ratio, -xmax, -xmin, buckets, alpha)
+    high.obj = bounds.symmetric.internal(X, sampling.ratio, xmin, xmax, buckets, alpha)
+    interval = c(-low.obj$mu.bound, high.obj$mu.bound)
+    
   } else if (constraint == "gaussian") {
     stop()
   }
