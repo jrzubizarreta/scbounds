@@ -29,60 +29,6 @@ get.logconc.upper = function(H) {
   Lhat.upper[-length(H.plus)]
 }
 
-#' Find level-alpha Kolmogorov-Smirnov bounds for a CDF F
-#' 
-#' @param Fhat The empirical CDF.
-#' @param n The number of samples used to compute Fhat.
-#' @param alpha The significance level.
-#' @return The ''upper'' KS bound (i.e., the one that lies below Fhat).
-#' @export get.ks.upper
-get.ks.upper = function(Fhat, n, alpha = 0.05) {
-  ks.thresh = uniroot(
-    function(D) { kolmim::pkolmim(D, n) - 1 + alpha},
-    c(0.3/sqrt(n), 2/sqrt(n))
-  )$root
-  
-  pmax(Fhat - ks.thresh, 0)
-}
-
-#' Main workhorse function. Maximizes the value of hat{mu} among all Hajek
-#' ratio estimators that satisfy the following properties:
-#' - The ratio of the sampling weights gamma is bounded
-#' - The resulting weighted CDF lies "above" lower.bound (as a function)
-#' 
-#' @param Fhat The raw, unweighted, empirical CDF.
-#' @param xvals The points at which Fhat is specified.
-#' @param lower.bound The lower bound for the Hajek-weighted empirical CDF.
-#' @param sampling.ratio The bound on the sampling ratio.
-#' 
-#' @return Fhat.weighted A weighted version of Fhat that maximizes hat{mu}
-#' 
-#' @export hajek.constrained
-hajek.constrained = function(Fhat, xvals, lower.bound, sampling.ratio = 5) {
-  
-  K = length(Fhat)
-  fhat = Fhat - c(0, Fhat[-K])
-  
-  objective.in = c(xvals * fhat, 0)
-  const.mat = rbind(
-    cbind(outer(1:K, 1:K, function(x, y) as.numeric(x >= y) * fhat[y]), 0),
-    cbind(diag(1, K, K), -1),
-    cbind(diag(-1, K, K), sampling.ratio),
-    c(rep(0, K), 1),
-    c(fhat, 0)
-  )
-  const.rhs = c(lower.bound, rep(0, 2*K + 1), 1)
-  
-  lp.out = lpSolve::lp(direction="max",
-                       objective.in= objective.in,
-                       const.mat=const.mat,
-                       const.dir=c(rep(">=", length(const.rhs) - 1), "=="),
-                       const.rhs=const.rhs)
-  
-  Fhat.weighted = cumsum(lp.out$solution[-(K+1)] * fhat)
-  Fhat.weighted
-}
-
 #' Finds the "Uhat" function from the paper, i.e., the pointwise minimum of all log-concave
 #' function that lie above some weighted version of Fhat.upper.
 #' 
@@ -112,11 +58,11 @@ get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
 #' Computes upper identification interval under the assumption that F is log-concave.
 #' 
 #' @param X The observed data.
-#' @param alpha Significance level used for KS bounds.
 #' @param sampling.ratio Bound on the sampling weights gamma.
 #' @param xmin Used to construct histogram representation.
 #' @param xmax Used to construct histogram representation.
 #' @param buckets Used to construct histogram representation.
+#' @param alpha Significance level used for KS bounds.
 #' 
 #' @return mu.bound The upper bound for mu(x).
 #' 
@@ -127,8 +73,8 @@ get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
 #' @return Weighted version of Fhat that maximizes mu, subject to log-concavity
 #' 
 #' @export bounds.logconc.internal
-bounds.logconc.internal = function(X, alpha = 1/length(X), sampling.ratio = 5,
-                                   xmin = NULL, xmax = NULL, buckets = 1000) {
+bounds.logconc.internal = function(X, sampling.ratio = 5,
+                                   xmin = NULL, xmax = NULL, buckets = 1000, alpha = 1/length(X)) {
   
   n = length(X)
   
@@ -140,7 +86,7 @@ bounds.logconc.internal = function(X, alpha = 1/length(X), sampling.ratio = 5,
   xvals = seq(xmin, xmax, length.out = buckets + 1)
   
   Fhat = ecdf(X)(xvals)
-  Fhat.upper = get.ks.upper(Fhat, n, alpha)
+  Fhat.upper = pmax(Fhat - get.ks.threshold(n, alpha), 0)
   Lhat.upper = get.logconc.upper.scan(Fhat.upper, sampling.ratio)
   Fhat.weighted = hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
   

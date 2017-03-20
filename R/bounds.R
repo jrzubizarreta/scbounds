@@ -26,8 +26,8 @@ bounds = function(X, sampling.ratio = 5, constraint = c("none", "logconcave", "s
     
   } else if (constraint == "logconcave") {
     
-    low.obj = bounds.logconc.internal(-X, alpha, sampling.ratio, -xmax, -xmin, buckets)
-    high.obj = bounds.logconc.internal(X, alpha, sampling.ratio, xmin, xmax, buckets)
+    low.obj = bounds.logconc.internal(-X, sampling.ratio, -xmax, -xmin, buckets, alpha)
+    high.obj = bounds.logconc.internal(X, sampling.ratio, xmin, xmax, buckets, alpha)
     interval = c(-low.obj$mu.bound, high.obj$mu.bound)
     
   } else if (constraint == "symmetric") {
@@ -42,10 +42,4 @@ bounds = function(X, sampling.ratio = 5, constraint = c("none", "logconcave", "s
              upper.bound.internal=high.obj)
   class(ret) = "bounds"
   return(ret)
-}
-
-#' @export print.bounds
-print.bounds = function(obj) {
-  mu.int = obj[[1]]
-  print(paste0("Identification interval for mu: (", signif(mu.int[1], 3), ", ", signif(mu.int[2], 3), ")"))
 }
