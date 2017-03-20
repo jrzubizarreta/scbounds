@@ -1,7 +1,6 @@
 library(kolmim)
 library(lpSolve)
-library(zoo) # for plotting only
-library(splines) #for plotting only...
+
 
 get.logconc.upper = function(H) {
 
@@ -29,35 +28,16 @@ get.logconc.upper = function(H) {
 	Lhat.upper[-length(H.plus)]
 }
 
-# Inspired by "A Modified Kolmogorov-Smirnov Test Sensitive to Tail Alternatives"
-# By Mason & Schuenemeyer
-
-get.mod.ks.upper = function(Fhat, n, alpha = 0.05) {
-	
-	if(alpha != 0.05) { stop("Only alpha = 0.05 implemented...") }
-	
-	delta = 2.8 #calibrated by hand for alpha = 0.05.... 
-	Fhat.AD = pmax(Fhat - 2 * delta * sqrt(Fhat * (1 - Fhat) / n), 0) #control body
-	Fhat.tail = pmax(Fhat - delta * (Fhat * (1 - Fhat)), 0) #control tail
-	pmax(Fhat.AD, Fhat.tail)
-}
-
 get.ks.upper = function(Fhat, n, alpha = 0.05) {
 	
 	ks.thresh = uniroot(
-		function(D) { pkolmim(D, n) - 1 + alpha},
+		function(D) { kolmim::pkolmim(D, n) - 1 + alpha},
 		c(0.3/sqrt(n), 2/sqrt(n))
 	)$root
 	
 	pmax(Fhat - ks.thresh, 0)
 }
 
-get.hajek.upper = function(Fhat.upper, sampling.ratio) {
-	Q = 1/sampling.ratio
-	sapply(Fhat.upper, function(u) {
-		Q * u / (1 - u + Q * u)
-	})
-}
 
 hajek.constrained = function(Fhat, xvals, lower.bound, sampling.ratio = 5) {
 
@@ -74,7 +54,7 @@ hajek.constrained = function(Fhat, xvals, lower.bound, sampling.ratio = 5) {
 	)
 	const.rhs = c(lower.bound, rep(0, 2*K + 1), 1)
 	
-	lp.out = lp(direction="max",
+	lp.out = lpSolve::lp(direction="max",
 				objective.in= objective.in,
 			    const.mat=const.mat,
 			    const.dir=c(rep(">=", length(const.rhs) - 1), "=="),
@@ -117,8 +97,6 @@ bounds.upper.internal = function(X, alpha = 0.05, sampling.ratio = 5,
 
 	Fhat = ecdf(X)(xvals)
 	Fhat.upper = get.ks.upper(Fhat, n, alpha)
-	Hhat.upper = get.hajek.upper(Fhat.upper, sampling.ratio)
-	#Lhat.upper = get.logconc.upper(Hhat.upper)
 	Lhat.upper = get.logconc.upper.scan(Fhat.upper, sampling.ratio)
 	Fhat.weighted = hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
 	Fhat.AL = hajek.constrained(Fhat, xvals, 0 * Fhat, sampling.ratio)
@@ -127,7 +105,6 @@ bounds.upper.internal = function(X, alpha = 0.05, sampling.ratio = 5,
 		xvals=xvals,
 		Fhat=Fhat,
 		Fhat.upper=Fhat.upper,
-		Hhat.upper=Hhat.upper,
 		Lhat.upper=Lhat.upper,
 		Fhat.weighted=Fhat.weighted, 
 		Fhat.AL = Fhat.AL
@@ -154,35 +131,3 @@ bounds.logconc = function(X, alpha = 0.05, sampling.ratio = 5,
 	
 	c(low=low, up=up)
 }
-
-plot.ret = function(ret) {
-	plot(ret$xvals, ret$Fhat, lwd = 2, xlab="y", ylab="F(y)")
-	lines(ret$xvals, ret$Fhat.upper, lwd = 2)
-	lines(ret$xvals, ret$Lhat.upper, col = 6, lwd = 2)
-	lines(ret$xvals, ret$Fhat.weighted, col = 2, lwd = 2)
-	lines(ret$xvals, ret$Fhat.AL, col = 4, lwd = 2, lty = 1)
-	legend("topleft", c("S.hat", "S.hat+", "L.hat", "F.hat (us)", "F.hat (AL)"), pch = c(1, NA, NA, NA, NA), lwd = c(NA, 2, 2, 2, 2), col = c(1, 1, 6, 2, 4))
-}
-
-zeropad = function(x) c(rep(0, 100), x, rep(0, 100))
-unpad = function(x) (x[101:(length(x) - 100)])
-
-plot.ret2 = function(ret, df=9) {
-	
-	K = length(ret$Fhat.weighted)
-	
-	fhat = ret$Fhat - c(0, ret$Fhat[-K])
-	fhat.weighted = ret$Fhat.weighted - c(0, ret$Fhat.weighted[-K])
-	fhat.AL = ret$Fhat.AL - c(0, ret$Fhat.AL[-K])
-	
-	fhat.smooth = unpad(predict(glm(zeropad(fhat) ~ ns(1:(length(fhat) + 200), df = df), family=quasi(link = "log", variance = "mu")), type = "response"))
-	
-	fhat.weighted.ratio = smooth.spline(na.approx(fhat.weighted / fhat), df = df)$y
-	fhat.AL.ratio = na.approx(fhat.AL / fhat)
-	
-	plot(ret$xvals, fhat.smooth, lwd = 2, ylim = range(fhat.smooth, fhat.smooth * fhat.weighted.ratio, fhat.smooth * fhat.AL.ratio), xlab="y", ylab="f(y)")
-	lines(ret$xvals, fhat.smooth * fhat.weighted.ratio, col = 2, lwd = 2)
-	lines(ret$xvals, fhat.smooth * fhat.AL.ratio, col = 4, lwd = 2)
-	legend("topleft", c("Uncorrected", "AL + Log-concave constr.", "Plain Aronow-Lee"), lwd = 2, col = c(1, 2, 4))
-}
-
