@@ -2,7 +2,9 @@
 
 export(bounds)
 export(bounds.logconc.internal)
+export(bounds.plain.internal)
 export(get.ks.upper)
 export(get.logconc.upper)
 export(get.logconc.upper.scan)
 export(hajek.constrained)
+export(print.bounds)

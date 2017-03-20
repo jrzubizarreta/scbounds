@@ -34,7 +34,8 @@ sampling.ratio = 9
 
 #out_al = bounds(y, 1, sampling.ratio, solver="glpk")
 #c("low"=out_al$mu_l, "high"=out_al$mu_h)
-out = bounds(y, sampling.ratio = 9, constraint="logconcave")
+out.al = bounds(y, sampling.ratio = 9, constraint="none")
+out.lc = bounds(y, sampling.ratio = 9, constraint="logconcave")
 
 ret = bounds.upper.internal(y, sampling.ratio = 9)
 

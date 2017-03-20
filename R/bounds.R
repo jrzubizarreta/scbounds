@@ -146,7 +146,6 @@ bounds.logconc.internal = function(X, alpha = 1/length(X), sampling.ratio = 5,
   Fhat.upper = get.ks.upper(Fhat, n, alpha)
   Lhat.upper = get.logconc.upper.scan(Fhat.upper, sampling.ratio)
   Fhat.weighted = hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
-  #	Fhat.AL = hajek.constrained(Fhat, xvals, 0 * Fhat, sampling.ratio)
   
   mu.bound = sum(xvals * (Fhat.weighted - c(0, Fhat.weighted[-length(Fhat.weighted)])))
   
@@ -162,6 +161,50 @@ bounds.logconc.internal = function(X, alpha = 1/length(X), sampling.ratio = 5,
   return(ret)
 }
 
+#' Computes upper identification interval without shape constraints, as
+#' in Aronow & Lee (2013).
+#' 
+#' @param X The observed data.
+#' @param sampling.ratio Bound on the sampling weights gamma.
+#' @param xmin Used to construct histogram representation.
+#' @param xmax Used to construct histogram representation.
+#' @param buckets Used to construct histogram representation.
+#' 
+#' @return mu.bound The upper bound for mu(x).
+#' 
+#' @return Fhat Unweighted empirical CDF of the data.
+#' @return xvals Points at which Fhat is evaluated.
+#' @return Weighted version of Fhat that maximizes mu, subject to sampling ratio constraint.
+#' 
+#' @export bounds.plain.internal
+bounds.plain.internal = function(X, sampling.ratio = 5,
+                                   xmin = NULL, xmax = NULL, buckets = 1000) {
+  
+  n = length(X)
+  
+  if(is.null(xmin)) { xmin = min(X) }
+  if(is.null(xmax)) { xmax = max(X) }
+  
+  if(xmin > min(X) | xmax < max(X)) { stop ("support too short") }
+  
+  xvals = seq(xmin, xmax, length.out = buckets + 1)
+  
+  Fhat = ecdf(X)(xvals)
+  Fhat.AL = hajek.constrained(Fhat, xvals, 0 * Fhat, sampling.ratio)
+  
+  mu.bound = sum(xvals * (Fhat.AL - c(0, Fhat.AL[-length(Fhat.AL)])))
+  
+  ret = list(mu.bound=mu.bound,
+             raw=data.frame(
+               xvals=xvals,
+               Fhat=Fhat,
+               Fhat.weighted=Fhat.AL
+             ))
+  
+  return(ret)
+}
+  
+  
 #' Main function. Computes identification interval.
 #' 
 #' @param X The observed data.
@@ -183,7 +226,11 @@ bounds = function(X, sampling.ratio = 5, constraint = c("none", "logconcave", "s
   constraint = match.arg(constraint)
   
   if (constraint == "none") {
-    asdf()
+
+    low.obj = bounds.plain.internal(-X, sampling.ratio, -xmax, -xmin, buckets)
+    high.obj = bounds.plain.internal(X, sampling.ratio, xmin, xmax, buckets)
+    interval = c(-low.obj$mu.bound, high.obj$mu.bound)
+    
   } else if (constraint == "logconcave") {
     
     low.obj = bounds.logconc.internal(-X, alpha, sampling.ratio, -xmax, -xmin, buckets)
@@ -196,7 +243,16 @@ bounds = function(X, sampling.ratio = 5, constraint = c("none", "logconcave", "s
     stop()
   }
   
-  return(list(mu.interval=interval,
-              lower.bound.internal=low.obj,
-              upper.bound.internal=high.obj))
+  ret = list(mu.interval=interval,
+             constraint=constraint,
+             lower.bound.internal=low.obj,
+             upper.bound.internal=high.obj)
+  class(ret) = "bounds"
+  return(ret)
+}
+
+#' @export print.bounds
+print.bounds = function(obj) {
+  mu.int = obj[[1]]
+  print(paste0("Identification interval for mu: (", signif(mu.int[1], 3), ", ", signif(mu.int[2], 3), ")"))
 }
