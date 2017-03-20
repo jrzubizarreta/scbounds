@@ -1,7 +1,10 @@
 library(kolmim)
 library(lpSolve)
 
-
+#' Find the smallest log-concave upper envelope for a function
+#' 
+#' @param H The function H(x), specified at equally spaced x-values.
+#' @return Lhat.upper The log-concave upper bound.
 get.logconc.upper = function(H) {
 
 	# append a "1" to H, to make CDF = 1 outside of support
@@ -28,8 +31,13 @@ get.logconc.upper = function(H) {
 	Lhat.upper[-length(H.plus)]
 }
 
+#' Find level-alpha Kolmogorov-Smirnov bounds for a CDF F
+#' 
+#' @param Fhat The empirical CDF.
+#' @param n The number of samples used to compute Fhat.
+#' @param alpha The significance level.
+#' @return The ''upper'' KS bound (i.e., the one that lies below Fhat).
 get.ks.upper = function(Fhat, n, alpha = 0.05) {
-	
 	ks.thresh = uniroot(
 		function(D) { kolmim::pkolmim(D, n) - 1 + alpha},
 		c(0.3/sqrt(n), 2/sqrt(n))
@@ -38,7 +46,17 @@ get.ks.upper = function(Fhat, n, alpha = 0.05) {
 	pmax(Fhat - ks.thresh, 0)
 }
 
-
+#' Main workhorse function. Maximizes the value of hat{mu} among all Hajek
+#' ratio estimators that satisfy the following properties:
+#' - The ratio of the sampling weights gamma is bounded
+#' - The resulting weighted CDF lies "above" lower.bound (as a function)
+#' 
+#' @param Fhat The raw, unweighted, empirical CDF.
+#' @param xvals The points at which Fhat is specified.
+#' @param lower.bound The lower bound for the Hajek-weighted empirical CDF.
+#' @param sampling.ratio The bound on the sampling ratio.
+#' 
+#' @return Fhat.weighted A weighted version of Fhat that maximizes hat{mu}
 hajek.constrained = function(Fhat, xvals, lower.bound, sampling.ratio = 5) {
 
 	K = length(Fhat)
@@ -62,9 +80,14 @@ hajek.constrained = function(Fhat, xvals, lower.bound, sampling.ratio = 5) {
 			    
 	Fhat.weighted = cumsum(lp.out$solution[-(K+1)] * fhat)
 	Fhat.weighted
-	
 }
 
+#' Finds the "Uhat" function from the paper, i.e., the pointwise minimum of all log-concave
+#' function that lie above some weighted version of Fhat.upper.
+#' 
+#' @param Fhat.upper The unweighted function.
+#' @param sampling.ratio Bound on the sampling weights.
+#' @return Lhat.upper The pointwise minimal bound.
 get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
 
 	K = length(Fhat.upper)
@@ -83,7 +106,22 @@ get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
 	Lhat.upper
 }
 
-bounds.upper.internal = function(X, alpha = 0.05, sampling.ratio = 5,
+#' Computes identification intervals under the assumption that F is log-concave.
+#' 
+#' @param X The observed data.
+#' @param alpha Significance level used for KS bounds.
+#' @param sampling.ratio Bound on the sampling weights gamma.
+#' @param xmin Used to construct histogram representation.
+#' @param xmax Used to construct histogram representation.
+#' @param buckets Used to construct histogram representation.
+#' 
+#' @return Fhat Unweighted empirical CDF of the data.
+#' @return xvals Points at which Fhat is evaluated.
+#' @return Fhat.upper KS bound for Fhat.
+#' @return Lhat.upper Lhat function from paper.
+#' @return Weighted version of Fhat that maximizes mu, subject to log-concavity
+#' @return Weighted version of Fhat that maximizes mu, without log-concavity constraint
+bounds.upper.internal = function(X, alpha = 1/length(X), sampling.ratio = 5,
 	xmin = NULL, xmax = NULL, buckets = 1000) {
 	
 	n = length(X)

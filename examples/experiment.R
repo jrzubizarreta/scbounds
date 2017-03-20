@@ -1,7 +1,10 @@
 rm(list = ls())
+
 library(foreign)
-source("bounds.R")
-source("bounds_orig.R")
+
+detach("package:bounds", unload=TRUE)
+library(bounds)
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 d = read.dta("minorities/all08_11_indigenous.dta")
 nrow(d)
