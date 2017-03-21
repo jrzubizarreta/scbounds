@@ -55,6 +55,17 @@ get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
   Lhat.upper
 }
 
+#' @export get.logconc.upper.threshold
+get.logconc.upper.threshold = function(Fhat.upper, sampling.ratio, threshold.idx) {
+  K = length(Fhat.upper)
+  fhat.upper = c(Fhat.upper[-1], 1) - Fhat.upper
+  fhat.upper = fhat.upper / sum(fhat.upper)
+  w = c(rep(1, threshold.idx), rep(sampling.ratio, K - threshold.idx))
+  hhat.upper = fhat.upper * w / sum(fhat.upper * w)
+  Hhat.upper = cumsum(hhat.upper)
+  get.logconc.upper(Hhat.upper)
+}
+
 #' Computes upper identification interval under the assumption that F is log-concave.
 #' 
 #' @param X The observed data.
@@ -88,18 +99,30 @@ bounds.logconc.internal = function(X, sampling.ratio = 5,
   
   Fhat = ecdf(X)(xvals)
   Fhat.upper = pmax(Fhat - get.ks.threshold(n, alpha), 0)
-  Lhat.upper = get.logconc.upper.scan(Fhat.upper, sampling.ratio)
-  Fhat.weighted = hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
   
-  mu.bound = sum(xvals * (Fhat.weighted - c(0, Fhat.weighted[-length(Fhat.weighted)])))
+  # This is a conservative hack, but runs faster
+  #Lhat.upper = get.logconc.upper.scan(Fhat.upper, sampling.ratio)
+  #Fhat.weighted = hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
+  #mu.bound = sum(xvals * (Fhat.weighted - c(0, Fhat.weighted[-length(Fhat.weighted)])))
+
+  thresholds = quantile(X, seq(1/sampling.ratio/2, 1 - 1/sampling.ratio/2, length.out = 20))
+  Fhat.candidates = lapply(thresholds, function(threshold) {
+    Lhat.upper = get.logconc.upper.threshold(Fhat.upper, sampling.ratio, sum(xvals <= threshold))
+    hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
+  })
   
-  ret = list(mu.bound=mu.bound,
+  mu.bound = sapply(Fhat.candidates, function(Fhat) {
+    sum(xvals * (Fhat - c(0, Fhat[-length(Fhat)])))
+  })
+  
+  opt.idx = which.max(mu.bound)
+  
+  ret = list(mu.bound=mu.bound[opt.idx],
              raw=data.frame(
                xvals=xvals,
                Fhat=Fhat,
                Fhat.upper=Fhat.upper,
-               Lhat.upper=Lhat.upper,
-               Fhat.weighted=Fhat.weighted
+               Fhat.weighted=Fhat.candidates[[opt.idx]]
              ))
   
   return(ret)
