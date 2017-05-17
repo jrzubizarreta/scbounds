@@ -29,36 +29,10 @@ get.logconc.upper = function(H) {
   Lhat.upper[-length(H.plus)]
 }
 
-#' Finds the "Uhat" function from the paper, i.e., the pointwise minimum of all log-concave
-#' function that lie above some weighted version of Fhat.upper.
-#' 
-#' @param Fhat.upper The unweighted function.
-#' @param sampling.ratio Bound on the sampling weights.
-#' @return Lhat.upper The pointwise minimal bound.
-#' 
-#' @export get.logconc.upper.scan
-get.logconc.upper.scan = function(Fhat.upper, sampling.ratio) {
-  
-  K = length(Fhat.upper)
-  fhat.upper = Fhat.upper - c(0, Fhat.upper[-K])
-  
-  all.idx = 1:(K - 1)
-  good.idx = which((Fhat.upper[-K] > 0) & (all.idx %% 5 == 0))
-  
-  Lhat.candidates = sapply(good.idx, function(thresh) {
-    w = c(rep(1, thresh), rep(sampling.ratio, K - thresh))
-    hhat.upper = fhat.upper * w / sum(fhat.upper * w)
-    Hhat.upper = cumsum(hhat.upper)
-    get.logconc.upper(Hhat.upper)
-  })
-  Lhat.upper = apply(Lhat.candidates, 1, min)
-  Lhat.upper
-}
-
 #' @export get.logconc.upper.threshold
-get.logconc.upper.threshold = function(Fhat.upper, sampling.ratio, threshold.idx) {
-  K = length(Fhat.upper)
-  fhat.upper = c(Fhat.upper[-1], 1) - Fhat.upper
+get.logconc.upper.threshold = function(Xhat.upper, sampling.ratio, threshold.idx) {
+  K = length(Xhat.upper)
+  fhat.upper = c(Xhat.upper[-1], 1) - Xhat.upper
   fhat.upper = fhat.upper / sum(fhat.upper)
   w = c(rep(1, threshold.idx), rep(sampling.ratio, K - threshold.idx))
   hhat.upper = fhat.upper * w / sum(fhat.upper * w)
@@ -77,11 +51,11 @@ get.logconc.upper.threshold = function(Fhat.upper, sampling.ratio, threshold.idx
 #' 
 #' @return mu.bound The upper bound for mu(x).
 #' 
-#' @return Fhat Unweighted empirical CDF of the data.
-#' @return xvals Points at which Fhat is evaluated.
-#' @return Fhat.upper KS bound for Fhat.
+#' @return Xhat Unweighted empirical CDF of the data.
+#' @return xvals Points at which Xhat is evaluated.
+#' @return Xhat.upper KS bound for Xhat.
 #' @return Lhat.upper Lhat function from paper.
-#' @return Weighted version of Fhat that maximizes mu, subject to log-concavity
+#' @return Weighted version of Xhat that maximizes mu, subject to log-concavity
 #' 
 #' @export bounds.logconc.internal
 bounds.logconc.internal = function(X, sampling.ratio = 5,
@@ -97,22 +71,17 @@ bounds.logconc.internal = function(X, sampling.ratio = 5,
   
   xvals = seq(xmin, xmax, length.out = buckets + 1)
   
-  Fhat = ecdf(X)(xvals)
-  Fhat.upper = pmax(Fhat - get.ks.threshold(n, alpha), 0)
-  
-  # This is a conservative hack, but runs faster
-  #Lhat.upper = get.logconc.upper.scan(Fhat.upper, sampling.ratio)
-  #Fhat.weighted = hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
-  #mu.bound = sum(xvals * (Fhat.weighted - c(0, Fhat.weighted[-length(Fhat.weighted)])))
+  Xhat = ecdf(X)(xvals)
+  Xhat.upper = pmax(Xhat - get.ks.threshold(n, alpha), 0)
 
   thresholds = quantile(X, seq(1/sampling.ratio/2, 1 - 1/sampling.ratio/2, length.out = 20))
-  Fhat.candidates = lapply(thresholds, function(threshold) {
-    Lhat.upper = get.logconc.upper.threshold(Fhat.upper, sampling.ratio, sum(xvals <= threshold))
-    hajek.constrained(Fhat, xvals, Lhat.upper, sampling.ratio)
+  Xhat.candidates = lapply(thresholds, function(threshold) {
+    Lhat.upper = get.logconc.upper.threshold(Xhat.upper, sampling.ratio, sum(xvals <= threshold))
+    hajek.constrained(Xhat, xvals, sampling.ratio, lower.bound = Lhat.upper)
   })
   
-  mu.bound = sapply(Fhat.candidates, function(Fhat) {
-    sum(xvals * (Fhat - c(0, Fhat[-length(Fhat)])))
+  mu.bound = sapply(Xhat.candidates, function(Xhat) {
+    sum(xvals * (Xhat - c(0, Xhat[-length(Xhat)])))
   })
   
   opt.idx = which.max(mu.bound)
@@ -120,9 +89,9 @@ bounds.logconc.internal = function(X, sampling.ratio = 5,
   ret = list(mu.bound=mu.bound[opt.idx],
              raw=data.frame(
                xvals=xvals,
-               Fhat=Fhat,
-               Fhat.upper=Fhat.upper,
-               Fhat.weighted=Fhat.candidates[[opt.idx]]
+               Xhat=Xhat,
+               Xhat.upper=Xhat.upper,
+               Xhat.weighted=Xhat.candidates[[opt.idx]]
              ))
   
   return(ret)

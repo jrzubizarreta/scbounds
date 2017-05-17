@@ -5,26 +5,29 @@
 \title{Computational workhorse function. Maximizes the value of hat{mu} among all Hajek
 ratio estimators that satisfy the following properties:
 - The ratio of the sampling weights gamma is bounded
-- The resulting weighted CDF lies "above" lower.bound (as a function)}
+- The resulting weighted CDF lies "between" lower.bound and upper.bound (as a function)}
 \usage{
-hajek.constrained(Fhat, xvals, lower.bound, sampling.ratio = 5)
+hajek.constrained(Xcdf, xvals, sampling.ratio, lower.bound = NULL,
+  upper.bound = NULL)
 }
 \arguments{
-\item{Fhat}{The raw, unweighted, empirical CDF.}
+\item{Xcdf}{The raw, unweighted, empirical CDF.}
 
-\item{xvals}{The points at which Fhat is specified.}
-
-\item{lower.bound}{The lower bound for the Hajek-weighted empirical CDF.}
+\item{xvals}{The points at which Xcdf is specified.}
 
 \item{sampling.ratio}{The bound on the sampling ratio.}
+
+\item{lower.bound}{A lower bound for the Hajek-weighted empirical CDF.}
+
+\item{upper.bound}{An upper bound for the Hajek-weighted empirical CDF.}
 }
 \value{
-Fhat.weighted A weighted version of Fhat that maximizes hat{mu}
+Xcdf.weighted A weighted version of Xcdf that maximizes hat{mu}
 }
 \description{
 Computational workhorse function. Maximizes the value of hat{mu} among all Hajek
 ratio estimators that satisfy the following properties:
 - The ratio of the sampling weights gamma is bounded
-- The resulting weighted CDF lies "above" lower.bound (as a function)
+- The resulting weighted CDF lies "between" lower.bound and upper.bound (as a function)
 }
 

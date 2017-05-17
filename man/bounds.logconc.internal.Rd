@@ -23,15 +23,15 @@ bounds.logconc.internal(X, sampling.ratio = 5, xmin = NULL, xmax = NULL,
 \value{
 mu.bound The upper bound for mu(x).
 
-Fhat Unweighted empirical CDF of the data.
+Xhat Unweighted empirical CDF of the data.
 
-xvals Points at which Fhat is evaluated.
+xvals Points at which Xhat is evaluated.
 
-Fhat.upper KS bound for Fhat.
+Xhat.upper KS bound for Xhat.
 
 Lhat.upper Lhat function from paper.
 
-Weighted version of Fhat that maximizes mu, subject to log-concavity
+Weighted version of Xhat that maximizes mu, subject to log-concavity
 }
 \description{
 Computes upper identification interval under the assumption that F is log-concave.

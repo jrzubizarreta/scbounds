@@ -9,9 +9,9 @@
 #' 
 #' @return mu.bound The upper bound for mu(x).
 #' 
-#' @return Fhat Unweighted empirical CDF of the data.
-#' @return xvals Points at which Fhat is evaluated.
-#' @return Fhat.weighted Weighted version of Fhat that maximizes mu, subject to sampling ratio constraint.
+#' @return Xhat Unweighted empirical CDF of the data.
+#' @return xvals Points at which Xhat is evaluated.
+#' @return Xhat.weighted Weighted version of Xhat that maximizes mu, subject to sampling ratio constraint.
 #' 
 #' @export bounds.plain.internal
 bounds.plain.internal = function(X, sampling.ratio = 5,
@@ -26,16 +26,16 @@ bounds.plain.internal = function(X, sampling.ratio = 5,
   
   xvals = seq(xmin, xmax, length.out = buckets + 1)
   
-  Fhat = ecdf(X)(xvals)
-  Fhat.AL = hajek.constrained(Fhat, xvals, 0 * Fhat, sampling.ratio)
+  Xhat = ecdf(X)(xvals)
+  Xhat.AL = hajek.constrained(Xhat, xvals, sampling.ratio)
   
-  mu.bound = sum(xvals * (Fhat.AL - c(0, Fhat.AL[-length(Fhat.AL)])))
+  mu.bound = sum(xvals * (Xhat.AL - c(0, Xhat.AL[-length(Xhat.AL)])))
   
   ret = list(mu.bound=mu.bound,
              raw=data.frame(
                xvals=xvals,
-               Fhat=Fhat,
-               Fhat.weighted=Fhat.AL
+               Xhat=Xhat,
+               Xhat.weighted=Xhat.AL
              ))
   
   return(ret)

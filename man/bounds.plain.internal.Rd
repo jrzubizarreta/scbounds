@@ -22,11 +22,11 @@ bounds.plain.internal(X, sampling.ratio = 5, xmin = NULL, xmax = NULL,
 \value{
 mu.bound The upper bound for mu(x).
 
-Fhat Unweighted empirical CDF of the data.
+Xhat Unweighted empirical CDF of the data.
 
-xvals Points at which Fhat is evaluated.
+xvals Points at which Xhat is evaluated.
 
-Fhat.weighted Weighted version of Fhat that maximizes mu, subject to sampling ratio constraint.
+Xhat.weighted Weighted version of Xhat that maximizes mu, subject to sampling ratio constraint.
 }
 \description{
 Computes upper identification interval without shape constraints, as

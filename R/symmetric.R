@@ -9,9 +9,9 @@
 #' 
 #' @return mu.bound The upper bound for mu(x).
 #' 
-#' @return Fhat Unweighted empirical CDF of the data.
-#' @return xvals Points at which Fhat is evaluated.
-#' @return Fhat.weighted Weighted version of Fhat that maximizes mu, subject to symmetry.
+#' @return Xhat Unweighted empirical CDF of the data.
+#' @return xvals Points at which Xhat is evaluated.
+#' @return Xhat.weighted Weighted version of Xhat that maximizes mu, subject to symmetry.
 #' 
 #' @export bounds.symmetric.internal
 bounds.symmetric.internal = function(X, sampling.ratio = 5,
@@ -26,17 +26,16 @@ bounds.symmetric.internal = function(X, sampling.ratio = 5,
   
   xvals = seq(xmin, xmax, length.out = buckets + 1)
   
-  Fhat = ecdf(X)(xvals)
+  Xhat = ecdf(X)(xvals)
   delta = qnorm(1 - alpha) * sqrt((1 + sampling.ratio) * (1 + 1/sampling.ratio) / 4 / n)
-  delta = delta / 2 # TODO: is this justified?
   center.candidates = quantile(X, seq(1/sampling.ratio/2, 1 - 1/sampling.ratio/2, length.out = 10))
   
-  Fhat.candidates = lapply(center.candidates, function(center) {
-    hajek.constrained.symmetric(Fhat, xvals, center, delta, sampling.ratio)
+  Xhat.candidates = lapply(center.candidates, function(center) {
+    hajek.constrained.symmetric(Xhat, xvals, sampling.ratio, center, delta)
   })
   
-  mu.bound = sapply(Fhat.candidates, function(Fhat) {
-    sum(xvals * (Fhat - c(0, Fhat[-length(Fhat)])))
+  mu.bound = sapply(Xhat.candidates, function(Xhat) {
+    sum(xvals * (Xhat - c(0, Xhat[-length(Xhat)])))
   })
   
   opt.idx = which.max(mu.bound)
@@ -44,8 +43,8 @@ bounds.symmetric.internal = function(X, sampling.ratio = 5,
   ret = list(mu.bound=mu.bound[opt.idx],
              raw=data.frame(
                xvals=xvals,
-               Fhat=Fhat,
-               Fhat.weighted=Fhat.candidates[[opt.idx]]
+               Xhat=Xhat,
+               Xhat.weighted=Xhat.candidates[[opt.idx]]
              ))
   
   return(ret)
