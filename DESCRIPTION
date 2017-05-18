@@ -1,4 +1,4 @@
-Package: bounds
+Package: scbounds
 Title: Shape-constrained partial identification of a population mean under
     unknown probabilities of sample selection
 Version: 0.0.0.9000
