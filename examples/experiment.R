@@ -82,20 +82,20 @@ rng = range(xhat.smooth, xhat.smooth * fhat.al.ratio, xhat.smooth * fhat.lc.rati
 
 pdf("minorities_DEN.pdf")
 pardef = par(mar = c(5, 4, 4, 2) + 0.5, cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
-plot(xvals, xhat.smooth, lwd = 2, ylim = rng, xlab="y", ylab="f(y)", type = "l")
+plot(xvals, xhat.smooth, lwd = 2, ylim = rng, xlab="y", ylab="f(y)", type = "l", lty = 3)
 lines(xvals, xhat.smooth * fhat.lc.ratio, col = 2, lwd = 2)
 lines(xvals, xhat.smooth * fhat.al.ratio, col = 4, lwd = 2)
 lines(xvals, xhat.smooth * fhat.sy.ratio, col = 3, lwd = 2)
-legend("topleft", c("Uncorrected", "Symmetric", "Log-concave", "No Constraint"), lwd = 2, col = c(1, 3, 2, 4), cex = 1.5)
+legend("topleft", c("Sampling Distr.", "No Constraint", "Symmetric", "Log-concave"), lwd = 2, col = c(1, 4, 3, 2), cex = 1.5, lty = c(3, 1, 1, 1))
 par = pardef
 dev.off()
 
 pdf("minorities_CDF.pdf")
 pardef = par(mar = c(5, 4, 4, 2) + 0.5, cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
-plot(xvals, Xhat, lwd = 2, xlab="y", ylab="F(y)", type = "l")
+plot(xvals, Xhat, lwd = 2, xlab="y", ylab="F(y)", type = "l", lty = 3)
 lines(xvals, Fhat.lc, col = 2, lwd = 2)
 lines(xvals, Fhat.al, col = 4, lwd = 2)
 lines(xvals, Fhat.sy, col = 3, lwd = 2)
-legend("topleft", c("Uncorrected", "Symmetric", "Log-concave", "No Constraint"), lwd = 2, col = c(1, 3, 2, 4), cex=1.5)
+legend("topleft", c("Sampling Distr.", "No Constraint", "Symmetric", "Log-concave"), lwd = 2, col = c(1, 4, 3, 2), cex = 1.5, lty = c(3, 1, 1, 1))
 par = pardef
 dev.off()
